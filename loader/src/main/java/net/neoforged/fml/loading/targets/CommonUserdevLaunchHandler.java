@@ -30,7 +30,6 @@ public abstract class CommonUserdevLaunchHandler extends CommonDevLaunchHandler 
         var extra = findJarOnClasspath(legacyCP, "client-extra");
 
         processStreams(legacyCP, vers, mcstream, modstream);
-        getModClasses().forEach((modid, paths) -> modstream.add(paths));
 
         var minecraft = mcstream.build().collect(Collectors.toList());
         var mcFilter = getMcFilter(extra, minecraft, modstream);

@@ -12,6 +12,18 @@ import java.util.Optional;
  * Finds Version data from a package, with possible default values
  */
 public class JarVersionLookupHandler {
+    public static Optional<String> getImplementationVersion(final Class<?> clazz) {
+        return getOptionalModuleVersion(clazz).map(ModuleDescriptor.Version::toString);
+    }
+
+    public static Optional<String> getSpecificationVersion(final Class<?> clazz) {
+        return getOptionalModuleVersion(clazz).map(ModuleDescriptor.Version::toString);
+    }
+
+    public static Optional<String> getImplementationTitle(final Class<?> clazz) {
+        return Optional.empty();
+    }
+
     public static Optional<ModuleDescriptor.Version> getOptionalModuleVersion(final Class<?> clazz) {
         // With java 9 we'll use the module's version if it exists in preference.
         var descriptor = clazz.getModule().getDescriptor();
