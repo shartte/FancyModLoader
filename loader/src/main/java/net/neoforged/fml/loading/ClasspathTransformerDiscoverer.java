@@ -11,10 +11,21 @@ import org.apache.logging.log4j.LogManager;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.module.ModuleReference;
+import java.lang.module.ResolvedModule;
+import java.net.URI;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class ClasspathTransformerDiscoverer implements ITransformerDiscoveryService {
 
@@ -36,9 +47,9 @@ public class ClasspathTransformerDiscoverer implements ITransformerDiscoveryServ
     private final static List<NamedPath> found = new ArrayList<>();
 
     public static List<Path> allExcluded() {
-        return found.stream().map(np->np.paths()[0]).toList();
+        return found.stream().map(np -> np.paths()[0]).toList();
     }
-    
+
     private void scan(final Path gameDirectory) {
         try {
             locateTransformers("META-INF/services/cpw.mods.modlauncher.api.ITransformationService");
@@ -49,11 +60,23 @@ public class ClasspathTransformerDiscoverer implements ITransformerDiscoveryServ
     }
 
     private void locateTransformers(String resource) throws IOException {
+        Set<Path> modulePath = ModuleLayer.boot().configuration()
+                .modules()
+                .stream()
+                .map(ResolvedModule::reference)
+                .map(ModuleReference::location)
+                .map(uri -> {
+                    return uri.map(Paths::get);
+                })
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toSet());
+
         final Enumeration<URL> resources = ClassLoader.getSystemClassLoader().getResources(resource);
         while (resources.hasMoreElements()) {
             URL url = resources.nextElement();
             Path path = ClasspathLocatorUtils.findJarPathFor(resource, url.toString(), url);
-            if (legacyClasspath.stream().anyMatch(path::equals) || !Files.exists(path) || Files.isDirectory(path))
+            if (modulePath.contains(path) || legacyClasspath.stream().anyMatch(path::equals) || !Files.exists(path) || Files.isDirectory(path))
                 continue;
             found.add(new NamedPath(path.toUri().toString(), path));
         }

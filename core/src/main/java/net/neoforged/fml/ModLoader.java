@@ -13,6 +13,7 @@ import net.neoforged.fml.event.IModBusEvent;
 import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.fml.loading.FMLLoader;
 import net.neoforged.fml.loading.ImmediateWindowHandler;
+import net.neoforged.fml.loading.JarVersionLookupHandler;
 import net.neoforged.fml.loading.LoadingModList;
 import net.neoforged.fml.loading.moddiscovery.InvalidModIdentifier;
 import net.neoforged.fml.loading.moddiscovery.ModFileInfo;
@@ -119,7 +120,7 @@ public class ModLoader
     }
 
     private String computeLanguageList() {
-        return "\n"+FMLLoader.getLanguageLoadingProvider().applyForEach(lp->lp.name() +"@"+ lp.getClass().getPackage().getImplementationVersion()).collect(Collectors.joining("\n\t\t", "\t\t", ""));
+        return "\n"+FMLLoader.getLanguageLoadingProvider().applyForEach(lp->lp.name() +"@"+ JarVersionLookupHandler.getModuleVersion(lp.getClass())).collect(Collectors.joining("\n\t\t", "\t\t", ""));
     }
 
     private String computeModLauncherServiceList() {

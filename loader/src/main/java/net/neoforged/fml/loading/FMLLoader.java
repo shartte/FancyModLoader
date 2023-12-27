@@ -24,6 +24,7 @@ import net.neoforged.neoforgespi.coremod.ICoreModProvider;
 import org.slf4j.Logger;
 
 import java.io.IOException;
+import java.lang.module.ModuleDescriptor;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -55,11 +56,11 @@ public class FMLLoader
     {
         final String version = LauncherVersion.getVersion();
         LOGGER.debug(LogMarkers.CORE,"FML {} loading", version);
-        final Package modLauncherPackage = ITransformationService.class.getPackage();
-        LOGGER.debug(LogMarkers.CORE,"FML found ModLauncher version : {}", modLauncherPackage.getImplementationVersion());
-        if (!modLauncherPackage.isCompatibleWith("4.0")) {
-            LOGGER.error(LogMarkers.CORE, "Found incompatible ModLauncher specification : {}, version {} from {}", modLauncherPackage.getSpecificationVersion(), modLauncherPackage.getImplementationVersion(), modLauncherPackage.getImplementationVendor());
-            throw new IncompatibleEnvironmentException("Incompatible modlauncher found "+modLauncherPackage.getSpecificationVersion());
+        var modLauncherVersion = JarVersionLookupHandler.getModuleVersion(ITransformationService.class);
+        LOGGER.debug(LogMarkers.CORE,"FML found ModLauncher version : {}", modLauncherVersion);
+        if (modLauncherVersion.compareTo(ModuleDescriptor.Version.parse("4.0")) < 0) {
+            LOGGER.error(LogMarkers.CORE, "Found incompatible ModLauncher module : {}", modLauncherVersion);
+            throw new IncompatibleEnvironmentException("Incompatible modlauncher found " + modLauncherVersion);
         }
 
         accessTransformer = ((AccessTransformerService) environment.findLaunchPlugin("accesstransformer").orElseThrow(()-> {
@@ -67,16 +68,9 @@ public class FMLLoader
             return new IncompatibleEnvironmentException("Missing AccessTransformer, cannot run");
         })).engine;
 
-        final Package atPackage = accessTransformer.getClass().getPackage();
-        LOGGER.debug(LogMarkers.CORE,"FML found AccessTransformer version : {}", atPackage.getImplementationVersion());
-        if (!atPackage.isCompatibleWith("1.0")) {
-            LOGGER.error(LogMarkers.CORE, "Found incompatible AccessTransformer specification : {}, version {} from {}", atPackage.getSpecificationVersion(), atPackage.getImplementationVersion(), atPackage.getImplementationVendor());
-            throw new IncompatibleEnvironmentException("Incompatible accesstransformer found "+atPackage.getSpecificationVersion());
-        }
-
         try {
             var eventBus = Class.forName("net.neoforged.bus.api.IEventBus", false, environment.getClass().getClassLoader());
-            LOGGER.debug(LogMarkers.CORE,"FML found EventBus version : {}", eventBus.getPackage().getImplementationVersion());
+            LOGGER.debug(LogMarkers.CORE,"FML found EventBus version : {}", JarVersionLookupHandler.getOptionalModuleVersion(eventBus));
         } catch (ClassNotFoundException e) {
             LOGGER.error(LogMarkers.CORE, "Event Bus library is missing, we need this to run");
             throw new IncompatibleEnvironmentException("Missing EventBus, cannot run");
@@ -99,16 +93,9 @@ public class FMLLoader
         }
 
         coreModProvider = coreModProviders.get(0);
-        final Package coremodPackage = coreModProvider.getClass().getPackage();
-        LOGGER.debug(LogMarkers.CORE,"FML found CoreMod version : {}", coremodPackage.getImplementationVersion());
+        LOGGER.debug(LogMarkers.CORE,"FML found CoreMod version : {}", JarVersionLookupHandler.getModuleVersion(coreModProvider.getClass()));
 
-
-        LOGGER.debug(LogMarkers.CORE, "Found ForgeSPI package implementation version {}", Environment.class.getPackage().getImplementationVersion());
-        LOGGER.debug(LogMarkers.CORE, "Found ForgeSPI package specification {}", Environment.class.getPackage().getSpecificationVersion());
-        if (Integer.parseInt(Environment.class.getPackage().getSpecificationVersion()) < 2) {
-            LOGGER.error(LogMarkers.CORE, "Found an out of date ForgeSPI implementation: {}, loading cannot continue", Environment.class.getPackage().getSpecificationVersion());
-            throw new IncompatibleEnvironmentException("ForgeSPI is out of date, we cannot continue");
-        }
+        LOGGER.debug(LogMarkers.CORE, "Found NeoForgeSPI version {}",JarVersionLookupHandler.getModuleVersion(Environment.class));
 
         try {
             Class.forName("com.electronwill.nightconfig.core.Config", false, environment.getClass().getClassLoader());

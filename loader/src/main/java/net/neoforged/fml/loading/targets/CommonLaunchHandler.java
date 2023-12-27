@@ -75,7 +75,11 @@ public abstract class CommonLaunchHandler implements ILaunchHandlerService {
     }
 
     protected final List<Path> getFmlPaths(String[] classpath) {
-        String[] fmlLibraries = System.getProperty("fml.pluginLayerLibraries").split(",");
+        var pluginLayerLibraries = System.getProperty("fml.pluginLayerLibraries");
+        if (pluginLayerLibraries == null) {
+            return List.of();
+        }
+        String[] fmlLibraries = pluginLayerLibraries.split(",");
         return Arrays.stream(classpath)
             .filter(e -> FileUtils.matchFileName(e, true, fmlLibraries))
             .map(Paths::get)

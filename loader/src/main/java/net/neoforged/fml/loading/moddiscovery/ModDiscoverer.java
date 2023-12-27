@@ -13,6 +13,7 @@ import cpw.mods.modlauncher.api.IModuleLayerManager;
 import cpw.mods.modlauncher.util.ServiceLoaderUtils;
 import net.neoforged.fml.loading.EarlyLoadingException;
 import net.neoforged.fml.loading.ImmediateWindowHandler;
+import net.neoforged.fml.loading.JarVersionLookupHandler;
 import net.neoforged.fml.loading.LogMarkers;
 import net.neoforged.fml.loading.UniqueModListBuilder;
 import net.neoforged.fml.loading.progress.StartupNotificationManager;
@@ -51,13 +52,13 @@ public class ModDiscoverer {
         {
             LOGGER.debug(LogMarkers.CORE, "Found Mod Locators : {}", modLocatorList.stream()
                                                                        .map(modLocator -> "(%s:%s)".formatted(modLocator.name(),
-                                                                         modLocator.getClass().getPackage().getImplementationVersion())).collect(Collectors.joining(",")));
+                                                                               JarVersionLookupHandler.getModuleVersion(modLocator.getClass()))).collect(Collectors.joining(",")));
         }
         if (LOGGER.isDebugEnabled(LogMarkers.CORE))
         {
             LOGGER.debug(LogMarkers.CORE, "Found Dependency Locators : {}", dependencyLocatorList.stream()
                                                                        .map(dependencyLocator -> "(%s:%s)".formatted(dependencyLocator.name(),
-                                                                         dependencyLocator.getClass().getPackage().getImplementationVersion())).collect(Collectors.joining(",")));
+                                                                               JarVersionLookupHandler.getModuleVersion(dependencyLocator.getClass()))).collect(Collectors.joining(",")));
         }
     }
 

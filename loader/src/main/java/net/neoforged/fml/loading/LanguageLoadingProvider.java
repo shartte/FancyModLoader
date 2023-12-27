@@ -17,6 +17,7 @@ import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.apache.maven.artifact.versioning.VersionRange;
 import org.slf4j.Logger;
 
+import java.lang.module.ModuleDescriptor;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -87,8 +88,9 @@ public class LanguageLoadingProvider
             } catch (URISyntaxException e) {
                 throw new RuntimeException("Huh?", e);
             }
-            Optional<String> implementationVersion = JarVersionLookupHandler.getImplementationVersion(lp.getClass());
-            String impl = implementationVersion.orElse(Files.isDirectory(lpPath) ? FMLLoader.versionInfo().fmlVersion().split("\\.")[0] : null);
+            Optional<ModuleDescriptor.Version> implementationVersion = JarVersionLookupHandler.getOptionalModuleVersion(lp.getClass());
+            String impl = implementationVersion.map(ModuleDescriptor.Version::toString)
+                    .orElse(Files.isDirectory(lpPath) ? FMLLoader.versionInfo().fmlVersion().split("\\.")[0] : null);
             if (impl == null) {
                 LOGGER.error(LogMarkers.CORE, "Found unversioned language provider {}", lp.name());
                 throw new RuntimeException("Failed to find implementation version for language provider "+ lp.name());

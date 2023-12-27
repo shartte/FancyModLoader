@@ -11,6 +11,8 @@ import net.neoforged.fml.loading.LogMarkers;
 import org.slf4j.Logger;
 
 import java.io.IOException;
+import java.lang.module.ModuleReference;
+import java.lang.module.ResolvedModule;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -21,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 public class ClasspathLocator extends AbstractJarFileModLocator
@@ -41,6 +44,17 @@ public class ClasspathLocator extends AbstractJarFileModLocator
 
         try {
             var claimed = new ArrayList<>(legacyClasspath);
+
+            // Do not discover resources from jars that are already on the module path
+            ModuleLayer.boot().configuration()
+                    .modules()
+                    .stream()
+                    .map(ResolvedModule::reference)
+                    .map(ModuleReference::location)
+                    .flatMap(Optional::stream)
+                    .map(Paths::get)
+                    .forEach(claimed::add);
+
             var paths = Stream.<Path>builder();
 
             findPaths(claimed, MODS_TOML).forEach(paths::add);
