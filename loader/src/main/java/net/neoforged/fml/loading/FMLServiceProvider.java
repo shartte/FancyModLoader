@@ -8,6 +8,7 @@ package net.neoforged.fml.loading;
 import static net.neoforged.fml.loading.LogMarkers.CORE;
 
 import com.mojang.logging.LogUtils;
+import cpw.mods.jarhandling.SecureJar;
 import cpw.mods.modlauncher.api.IEnvironment;
 import cpw.mods.modlauncher.api.IModuleLayerManager;
 import cpw.mods.modlauncher.api.ITransformationService;
@@ -24,6 +25,10 @@ import joptsimple.ArgumentAcceptingOptionSpec;
 import joptsimple.OptionSpecBuilder;
 import net.neoforged.fml.loading.moddiscovery.ModFile;
 import net.neoforged.neoforgespi.Environment;
+import net.neoforged.neoforgespi.locating.IModFile;
+import net.neoforged.neoforgespi.locating.IModProvider;
+import net.neoforged.neoforgespi.locating.InvalidModFileException;
+import net.neoforged.neoforgespi.locating.ModFileFactory;
 import org.slf4j.Logger;
 
 public class FMLServiceProvider implements ITransformationService {

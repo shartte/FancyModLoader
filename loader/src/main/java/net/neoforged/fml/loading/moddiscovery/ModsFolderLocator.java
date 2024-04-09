@@ -6,7 +6,8 @@
 package net.neoforged.fml.loading.moddiscovery;
 
 import com.mojang.logging.LogUtils;
-import cpw.mods.jarhandling.SecureJar;
+import cpw.mods.jarhandling.JarContents;
+import cpw.mods.jarhandling.JarContentsBuilder;
 import cpw.mods.modlauncher.api.LambdaExceptionUtils;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -42,14 +43,14 @@ public class ModsFolderLocator extends AbstractJarFileModLocator {
     }
 
     @Override
-    public Stream<SecureJar> scanCandidates() {
+    public Stream<JarContents> scanCandidates() {
         LOGGER.debug(LogMarkers.SCAN, "Scanning mods dir {} for mods", this.modFolder);
         var excluded = ModDirTransformerDiscoverer.allExcluded();
 
         return LambdaExceptionUtils.uncheck(() -> Files.list(this.modFolder))
                 .filter(p -> !excluded.contains(p) && StringUtils.toLowerCase(p.getFileName().toString()).endsWith(SUFFIX))
                 .sorted(Comparator.comparing(path -> StringUtils.toLowerCase(path.getFileName().toString())))
-                .map(SecureJar::from);
+                .map(p -> new JarContentsBuilder().paths(p).build());
     }
 
     @Override

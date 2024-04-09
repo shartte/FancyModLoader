@@ -66,7 +66,12 @@ public class JarInJarDependencyLocator implements IDependencyLocator, IModProvid
         final List<IModFile> sources = Lists.newArrayList();
         loadedMods.forEach(sources::add);
 
-        final List<IModFile> dependenciesToLoad = JarSelector.detectAndSelect(sources, this::loadResourceFromModFile, this::loadModFileFrom, this::identifyMod, this::exception);
+        final List<IModFile> dependenciesToLoad = JarSelector.detectAndSelect(
+                sources,
+                this::loadResourceFromModFile,
+                (file, path) -> loadModFileFrom(file, path, provider),
+                this::identifyMod,
+                this::exception);
 
         if (dependenciesToLoad.isEmpty()) {
             LOGGER.info("No dependencies to load found. Skipping!");
@@ -78,7 +83,6 @@ public class JarInJarDependencyLocator implements IDependencyLocator, IModProvid
     }
 
     @SuppressWarnings("resource")
-    @Override
     protected Optional<IModFile> loadModFileFrom(final IModFile file, final Path path, Function<JarContents, Optional<IModProvider.ModFileOrException>> provider) {
         try {
             final Path pathInModFile = file.findResource(path.toString());

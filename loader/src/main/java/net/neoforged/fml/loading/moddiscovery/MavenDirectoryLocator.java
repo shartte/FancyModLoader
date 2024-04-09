@@ -5,7 +5,8 @@
 
 package net.neoforged.fml.loading.moddiscovery;
 
-import cpw.mods.jarhandling.SecureJar;
+import cpw.mods.jarhandling.JarContents;
+import cpw.mods.jarhandling.JarContentsBuilder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -20,8 +21,8 @@ public class MavenDirectoryLocator implements IModLocator {
     private List<Path> modCoords;
 
     @Override
-    public Stream<SecureJar> scanCandidates() {
-        return modCoords.stream().map(SecureJar::from);
+    public Stream<JarContents> scanCandidates() {
+        return modCoords.stream().map(p -> new JarContentsBuilder().paths(p).build());
     }
 
     @Override
