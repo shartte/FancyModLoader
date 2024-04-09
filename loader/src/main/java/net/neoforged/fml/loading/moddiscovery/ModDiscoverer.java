@@ -24,6 +24,7 @@ import net.neoforged.fml.loading.EarlyLoadingException;
 import net.neoforged.fml.loading.ImmediateWindowHandler;
 import net.neoforged.fml.loading.LogMarkers;
 import net.neoforged.fml.loading.UniqueModListBuilder;
+import net.neoforged.fml.loading.moddiscovery.locators.ModsFolderLocator;
 import net.neoforged.fml.loading.progress.StartupNotificationManager;
 import net.neoforged.neoforgespi.Environment;
 import net.neoforged.neoforgespi.locating.IDependencyLocator;

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  */
 
-package net.neoforged.fml.loading.moddiscovery;
+package net.neoforged.fml.loading.moddiscovery.locators;
 
 import com.electronwill.nightconfig.core.Config;
 import com.mojang.logging.LogUtils;
@@ -16,6 +16,10 @@ import java.util.Map;
 import java.util.stream.Stream;
 import net.neoforged.fml.loading.ClasspathTransformerDiscoverer;
 import net.neoforged.fml.loading.FMLLoader;
+import net.neoforged.fml.loading.moddiscovery.ModFile;
+import net.neoforged.fml.loading.moddiscovery.ModFileInfo;
+import net.neoforged.fml.loading.moddiscovery.ModJarMetadata;
+import net.neoforged.fml.loading.moddiscovery.NightConfigWrapper;
 import net.neoforged.neoforgespi.language.IModFileInfo;
 import net.neoforged.neoforgespi.locating.IModFile;
 import net.neoforged.neoforgespi.locating.IModLocator;

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  */
 
-package net.neoforged.fml.loading.moddiscovery;
+package net.neoforged.fml.loading.modscan;
 
 import com.mojang.logging.LogUtils;
 import java.io.IOException;
@@ -12,6 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import net.neoforged.fml.loading.LogMarkers;
+import net.neoforged.fml.loading.moddiscovery.ModFile;
 import net.neoforged.neoforgespi.language.IModLanguageProvider;
 import net.neoforged.neoforgespi.language.ModFileScanData;
 import org.objectweb.asm.ClassReader;

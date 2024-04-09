@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  */
 
-package net.neoforged.fml.loading.moddiscovery;
+package net.neoforged.fml.loading.moddiscovery.locators;
 
 import java.io.File;
 import java.nio.file.Path;

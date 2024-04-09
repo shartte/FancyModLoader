@@ -25,7 +25,7 @@ public class NightConfigWrapper implements IConfigurable {
         this.config = config;
     }
 
-    NightConfigWrapper setFile(IModFileInfo file) {
+    public NightConfigWrapper setFile(IModFileInfo file) {
         this.file = file;
         return this;
     }

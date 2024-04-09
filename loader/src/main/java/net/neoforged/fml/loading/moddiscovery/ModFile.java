@@ -23,6 +23,7 @@ import java.util.jar.Manifest;
 import java.util.stream.Stream;
 import net.neoforged.fml.loading.FMLLoader;
 import net.neoforged.fml.loading.LogMarkers;
+import net.neoforged.fml.loading.modscan.Scanner;
 import net.neoforged.neoforgespi.language.IModFileInfo;
 import net.neoforged.neoforgespi.language.IModInfo;
 import net.neoforged.neoforgespi.language.IModLanguageProvider;
@@ -53,7 +54,7 @@ public class ModFile implements IModFile {
     private List<String> mixinConfigs;
     private List<Path> accessTransformers;
 
-    static final Attributes.Name TYPE = new Attributes.Name("FMLModType");
+    public static final Attributes.Name TYPE = new Attributes.Name("FMLModType");
     private SecureJar.Status securityStatus;
 
     public ModFile(final SecureJar jar, final IModProvider provider, final ModFileFactory.ModFileInfoParser parser) {

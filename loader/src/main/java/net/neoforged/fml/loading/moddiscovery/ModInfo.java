@@ -16,6 +16,7 @@ import java.util.regex.Pattern;
 import net.neoforged.fml.loading.FMLLoader;
 import net.neoforged.fml.loading.StringSubstitutor;
 import net.neoforged.fml.loading.StringUtils;
+import net.neoforged.fml.loading.moddiscovery.locators.MinecraftLocator;
 import net.neoforged.neoforgespi.language.IConfigurable;
 import net.neoforged.neoforgespi.language.IModInfo;
 import net.neoforged.neoforgespi.language.MavenVersionAdapter;

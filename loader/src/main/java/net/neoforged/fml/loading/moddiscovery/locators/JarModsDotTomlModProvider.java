@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  */
 
-package net.neoforged.fml.loading.moddiscovery;
+package net.neoforged.fml.loading.moddiscovery.locators;
 
 import com.mojang.logging.LogUtils;
 import cpw.mods.jarhandling.JarContents;
@@ -14,6 +14,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import net.neoforged.fml.loading.LogMarkers;
+import net.neoforged.fml.loading.moddiscovery.ModFile;
+import net.neoforged.fml.loading.moddiscovery.ModFileParser;
+import net.neoforged.fml.loading.moddiscovery.ModJarMetadata;
 import net.neoforged.neoforgespi.language.IConfigurable;
 import net.neoforged.neoforgespi.language.IModFileInfo;
 import net.neoforged.neoforgespi.language.IModInfo;

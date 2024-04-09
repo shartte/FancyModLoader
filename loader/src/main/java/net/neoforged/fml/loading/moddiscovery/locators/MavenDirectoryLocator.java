@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  */
 
-package net.neoforged.fml.loading.moddiscovery;
+package net.neoforged.fml.loading.moddiscovery.locators;
 
 import cpw.mods.jarhandling.JarContents;
 import cpw.mods.jarhandling.JarContentsBuilder;
@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import net.neoforged.fml.loading.FMLPaths;
 import net.neoforged.fml.loading.MavenCoordinateResolver;
+import net.neoforged.fml.loading.moddiscovery.ModListHandler;
 import net.neoforged.neoforgespi.locating.IModLocator;
 
 public class MavenDirectoryLocator implements IModLocator {

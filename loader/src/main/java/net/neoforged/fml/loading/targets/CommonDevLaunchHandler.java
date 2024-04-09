@@ -17,7 +17,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import net.neoforged.fml.loading.FileUtils;
-import net.neoforged.fml.loading.moddiscovery.JarModsDotTomlModProvider;
+import net.neoforged.fml.loading.moddiscovery.locators.JarModsDotTomlModProvider;
 
 public abstract class CommonDevLaunchHandler extends CommonLaunchHandler {
     @Override

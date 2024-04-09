@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  */
 
-package net.neoforged.fml.loading.moddiscovery;
+package net.neoforged.fml.loading.modscan;
 
 import java.util.LinkedList;
 import org.objectweb.asm.AnnotationVisitor;
