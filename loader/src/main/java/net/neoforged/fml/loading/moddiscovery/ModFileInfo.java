@@ -35,6 +35,8 @@ import net.neoforged.neoforgespi.language.IConfigurable;
 import net.neoforged.neoforgespi.language.IModFileInfo;
 import net.neoforged.neoforgespi.language.IModInfo;
 import net.neoforged.neoforgespi.language.MavenVersionAdapter;
+import net.neoforged.neoforgespi.locating.InvalidModFileException;
+import org.jetbrains.annotations.ApiStatus;
 import org.slf4j.Logger;
 
 public class ModFileInfo implements IModFileInfo, IConfigurable {
@@ -50,7 +52,8 @@ public class ModFileInfo implements IModFileInfo, IConfigurable {
     private final String license;
     private final List<String> usesServices;
 
-    ModFileInfo(final ModFile modFile, final IConfigurable config, Consumer<IModFileInfo> configFileConsumer) {
+    @ApiStatus.Internal
+    public ModFileInfo(final ModFile modFile, final IConfigurable config, Consumer<IModFileInfo> configFileConsumer) {
         this.modFile = modFile;
         this.config = config;
         configFileConsumer.accept(this);

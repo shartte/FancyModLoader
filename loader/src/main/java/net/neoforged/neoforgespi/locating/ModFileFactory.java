@@ -24,13 +24,25 @@ public interface ModFileFactory {
      * @param jar      The secure jar to load the mod file from.
      * @param provider The provider which is offering the mod file for loading-
      * @param parser   The parser which is responsible for parsing the metadata of the file itself.
+     * @param type     the type of the mod
      * @return The mod file.
      */
-    IModFile build(final SecureJar jar, final IModProvider provider, ModFileInfoParser parser);
+    IModFile build(final SecureJar jar, final IModProvider provider, ModFileInfoParser parser, IModFile.Type type) throws InvalidModFileException;
+
+    /**
+     * Builds a new mod file instance depending on the current runtime.
+     * 
+     * @param jar      The secure jar to load the mod file from.
+     * @param provider The provider which is offering the mod file for loading-
+     * @param parser   The parser which is responsible for parsing the metadata of the file itself.
+     * @return The mod file.
+     */
+    IModFile build(final SecureJar jar, final IModProvider provider, ModFileInfoParser parser) throws InvalidModFileException;
 
     /**
      * A parser specification for building a particular mod files metadata.
      */
+    @FunctionalInterface
     interface ModFileInfoParser {
         /**
          * Invoked to get the freshly build mod files metadata.
@@ -38,6 +50,6 @@ public interface ModFileFactory {
          * @param file The file to parse the metadata for.
          * @return The mod file metadata info.
          */
-        IModFileInfo build(IModFile file);
+        IModFileInfo build(IModFile file) throws InvalidModFileException;
     }
 }

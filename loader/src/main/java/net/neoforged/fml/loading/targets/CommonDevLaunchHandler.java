@@ -17,7 +17,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import net.neoforged.fml.loading.FileUtils;
-import net.neoforged.fml.loading.moddiscovery.AbstractModProvider;
+import net.neoforged.fml.loading.moddiscovery.JarModsDotTomlModProvider;
 
 public abstract class CommonDevLaunchHandler extends CommonLaunchHandler {
     @Override
@@ -122,7 +122,7 @@ public abstract class CommonDevLaunchHandler extends CommonLaunchHandler {
     }
 
     protected String[] getExcludedPrefixes() {
-        return new String[] { "net/neoforged/neoforge/", "META-INF/services/", "META-INF/coremods.json", AbstractModProvider.MODS_TOML };
+        return new String[] { "net/neoforged/neoforge/", "META-INF/services/", "META-INF/coremods.json", JarModsDotTomlModProvider.MODS_TOML };
     }
 
     private static String getRandomNumbers(int length) {

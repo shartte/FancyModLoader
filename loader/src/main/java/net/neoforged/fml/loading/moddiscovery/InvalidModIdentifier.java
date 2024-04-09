@@ -5,48 +5,37 @@
 
 package net.neoforged.fml.loading.moddiscovery;
 
-import cpw.mods.modlauncher.api.LambdaExceptionUtils;
-import java.nio.file.Path;
+import cpw.mods.jarhandling.JarContents;
 import java.util.Arrays;
 import java.util.Optional;
-import java.util.function.BiPredicate;
-import java.util.zip.ZipFile;
+import java.util.function.Predicate;
 import net.neoforged.fml.loading.StringUtils;
 
 public enum InvalidModIdentifier {
     OLDFORGE(filePresent("mcmod.info")),
+    MINECRAFT_FORGE(filePresent("mods.toml")),
     FABRIC(filePresent("fabric.mod.json")),
     LITELOADER(filePresent("litemod.json")),
     OPTIFINE(filePresent("optifine/Installer.class")),
-    BUKKIT(filePresent("plugin.yml")),
-    INVALIDZIP((f, zf) -> !zf.isPresent());
+    BUKKIT(filePresent("plugin.yml"));
 
-    private BiPredicate<Path, Optional<ZipFile>> ident;
+    private final Predicate<JarContents> ident;
 
-    InvalidModIdentifier(BiPredicate<Path, Optional<ZipFile>> identifier) {
+    InvalidModIdentifier(Predicate<JarContents> identifier) {
         this.ident = identifier;
     }
 
-    private String getReason() {
+    public String getReason() {
         return "fml.modloading.brokenfile." + StringUtils.toLowerCase(name());
     }
 
-    public static Optional<String> identifyJarProblem(Path path) {
-        Optional<ZipFile> zfo = tryOpenFile(path);
-        Optional<String> result = Arrays.stream(values()).filter(i -> i.ident.test(path, zfo)).map(InvalidModIdentifier::getReason).findAny();
-        zfo.ifPresent(LambdaExceptionUtils.rethrowConsumer(ZipFile::close));
-        return result;
+    public static Optional<InvalidModIdentifier> identifyJarProblem(JarContents jar) {
+        return Arrays.stream(values())
+                .filter(i -> i.ident.test(jar))
+                .findAny();
     }
 
-    private static BiPredicate<Path, Optional<ZipFile>> filePresent(String filename) {
-        return (f, zfo) -> zfo.map(zf -> zf.getEntry(filename) != null).orElse(false);
-    }
-
-    private static Optional<ZipFile> tryOpenFile(Path path) {
-        try {
-            return Optional.of(new ZipFile(path.toFile()));
-        } catch (Exception ignored) {
-            return Optional.empty();
-        }
+    private static Predicate<JarContents> filePresent(String filename) {
+        return jarContents -> jarContents.findFile(filename).isPresent();
     }
 }

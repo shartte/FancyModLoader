@@ -65,7 +65,17 @@ public class FMLServiceProvider implements ITransformationService {
         LOGGER.debug(CORE, "Loading configuration");
         FMLConfig.load();
         LOGGER.debug(CORE, "Preparing ModFile");
-        environment.computePropertyIfAbsent(Environment.Keys.MODFILEFACTORY.get(), k -> ModFile::new);
+        environment.computePropertyIfAbsent(Environment.Keys.MODFILEFACTORY.get(), k -> new ModFileFactory() {
+            @Override
+            public IModFile build(SecureJar jar, IModProvider provider, ModFileInfoParser parser) throws InvalidModFileException {
+                return new ModFile(jar, provider, parser);
+            }
+
+            @Override
+            public IModFile build(SecureJar jar, IModProvider provider, ModFileInfoParser parser, IModFile.Type type) throws InvalidModFileException {
+                return new ModFile(jar, provider, parser, type.name());
+            }
+        });
         arguments = new HashMap<>();
         arguments.put("modLists", modListsArgumentList);
         arguments.put("mods", modsArgumentList);

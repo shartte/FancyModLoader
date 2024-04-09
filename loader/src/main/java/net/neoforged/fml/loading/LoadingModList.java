@@ -22,7 +22,6 @@ import net.neoforged.fml.loading.moddiscovery.BackgroundScanHandler;
 import net.neoforged.fml.loading.moddiscovery.ModFile;
 import net.neoforged.fml.loading.moddiscovery.ModFileInfo;
 import net.neoforged.fml.loading.moddiscovery.ModInfo;
-import net.neoforged.neoforgespi.locating.IModFile;
 
 /**
  * Master list of all mods <em>in the loading context. This class cannot refer outside the
@@ -35,7 +34,6 @@ public class LoadingModList {
     private final Map<String, ModFileInfo> fileById;
     private final List<EarlyLoadingException> preLoadErrors;
     private final List<EarlyLoadingException> preLoadWarnings;
-    private List<IModFile> brokenFiles;
 
     private LoadingModList(final List<ModFile> modFiles, final List<ModInfo> sortedList) {
         this.modFiles = modFiles.stream()
@@ -165,13 +163,5 @@ public class LoadingModList {
 
     public List<EarlyLoadingException> getWarnings() {
         return preLoadWarnings;
-    }
-
-    public void setBrokenFiles(final List<IModFile> brokenFiles) {
-        this.brokenFiles = brokenFiles;
-    }
-
-    public List<IModFile> getBrokenFiles() {
-        return this.brokenFiles;
     }
 }

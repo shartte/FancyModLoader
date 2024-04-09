@@ -5,6 +5,7 @@
 
 package net.neoforged.fml.loading.moddiscovery;
 
+import cpw.mods.jarhandling.SecureJar;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
@@ -25,7 +26,7 @@ public class BuiltinGameLibraryLocator extends AbstractJarFileModLocator {
     public void initArguments(Map<String, ?> arguments) {}
 
     @Override
-    public Stream<Path> scanCandidates() {
+    public Stream<SecureJar> scanCandidates() {
         String gameLibrariesStr = System.getProperty("fml.gameLayerLibraries");
         if (gameLibrariesStr == null || gameLibrariesStr.isBlank())
             return Stream.of();
@@ -38,6 +39,6 @@ public class BuiltinGameLibraryLocator extends AbstractJarFileModLocator {
                 paths.add(path);
         }
 
-        return paths.build();
+        return paths.build().map(SecureJar::from);
     }
 }

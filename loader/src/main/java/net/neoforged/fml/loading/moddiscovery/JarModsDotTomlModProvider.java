@@ -1,15 +1,8 @@
-/*
- * Copyright (c) Forge Development LLC and contributors
- * SPDX-License-Identifier: LGPL-2.1-only
- */
-
 package net.neoforged.fml.loading.moddiscovery;
 
 import com.mojang.logging.LogUtils;
-import cpw.mods.jarhandling.JarContentsBuilder;
+import cpw.mods.jarhandling.JarContents;
 import cpw.mods.jarhandling.SecureJar;
-import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -20,42 +13,42 @@ import net.neoforged.neoforgespi.language.IConfigurable;
 import net.neoforged.neoforgespi.language.IModFileInfo;
 import net.neoforged.neoforgespi.language.IModInfo;
 import net.neoforged.neoforgespi.locating.IModFile;
-import net.neoforged.neoforgespi.locating.IModLocator;
 import net.neoforged.neoforgespi.locating.IModProvider;
 import net.neoforged.neoforgespi.locating.ModFileLoadingException;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
-public abstract class AbstractModProvider implements IModProvider {
+public class JarModsDotTomlModProvider implements IModProvider {
     private static final Logger LOGGER = LogUtils.getLogger();
     public static final String MODS_TOML = "META-INF/neoforge.mods.toml";
     protected static final String MANIFEST = "META-INF/MANIFEST.MF";
 
-    protected IModLocator.ModFileOrException createMod(Path... path) {
-        var jarContents = new JarContentsBuilder()
-                .paths(path)
-                .build();
-
-        IModFile mod;
-        var type = jarContents.getManifest().getMainAttributes().getValue(ModFile.TYPE);
-        if (type == null) {
-            type = getDefaultJarModType();
-        }
-        if (jarContents.findFile(MODS_TOML).isPresent()) {
-            LOGGER.debug(LogMarkers.SCAN, "Found {} mod of type {}: {}", MODS_TOML, type, path);
-            var mjm = new ModJarMetadata(jarContents);
-            mod = new ModFile(SecureJar.from(jarContents, mjm), this, ModFileParser::modsTomlParser);
-            mjm.setModFile(mod);
-        } else if (type != null) {
-            LOGGER.debug(LogMarkers.SCAN, "Found {} mod of type {}: {}", MANIFEST, type, path);
-            mod = new ModFile(SecureJar.from(jarContents), this, this::manifestParser, type);
-        } else {
-            return new IModLocator.ModFileOrException(null, new ModFileLoadingException("Invalid mod file found " + Arrays.toString(path)));
-        }
-
-        return new IModLocator.ModFileOrException(mod, null);
+    @Override
+    public String name() {
+        return "modsdottoml";
     }
 
-    protected IModFileInfo manifestParser(final IModFile mod) {
+    protected IModProvider.ModFileOrException createMod(JarContents jar) {
+        var type = jar.getManifest().getMainAttributes().getValue(ModFile.TYPE);
+        try {
+            IModFile mod = null;
+            if (jar.findFile(MODS_TOML).isPresent()) {
+                LOGGER.debug(LogMarkers.SCAN, "Found {} mod of type {}: {}", MODS_TOML, type, jar.getPrimaryPath());
+                var mjm = new ModJarMetadata(jar);
+                mod = new ModFile(SecureJar.from(jar, mjm), this, ModFileParser::modsTomlParser);
+                mjm.setModFile(mod);
+            } else if (type != null) {
+                LOGGER.debug(LogMarkers.SCAN, "Found {} mod of type {}: {}", MANIFEST, type, jar.getPrimaryPath());
+                mod = new ModFile(SecureJar.from(jar), this, JarModsDotTomlModProvider::manifestParser, type);
+            }
+
+            return mod == null ? null : new ModFileOrException(mod, null);
+        } catch (ModFileLoadingException exception) {
+            return new ModFileOrException(null, exception);
+        }
+    }
+
+    public static IModFileInfo manifestParser(final IModFile mod) {
         Function<String, Optional<String>> cfg = name -> Optional.ofNullable(mod.getSecureJar().moduleDataProvider().getManifest().getMainAttributes().getValue(name));
         var license = cfg.apply("LICENSE").orElse("");
         var dummy = new IConfigurable() {
@@ -78,11 +71,13 @@ public abstract class AbstractModProvider implements IModProvider {
         return true;
     }
 
-    protected String getDefaultJarModType() {
-        return null;
+    @Override
+    public @Nullable ModFileOrException provide(JarContents jar) {
+        return createMod(jar);
     }
 
-    private record DefaultModFileInfo(IModFile mod, String license, IConfigurable configurable) implements IModFileInfo, IConfigurable {
+    private record DefaultModFileInfo(IModFile mod, String license,
+            IConfigurable configurable) implements IModFileInfo, IConfigurable {
         @Override
         public <T> Optional<T> getConfigElement(final String... strings) {
             return Optional.empty();

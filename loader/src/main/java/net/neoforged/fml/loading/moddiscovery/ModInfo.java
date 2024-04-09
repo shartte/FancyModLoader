@@ -20,6 +20,7 @@ import net.neoforged.neoforgespi.language.IConfigurable;
 import net.neoforged.neoforgespi.language.IModInfo;
 import net.neoforged.neoforgespi.language.MavenVersionAdapter;
 import net.neoforged.neoforgespi.locating.ForgeFeature;
+import net.neoforged.neoforgespi.locating.InvalidModFileException;
 import org.apache.maven.artifact.versioning.ArtifactVersion;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.apache.maven.artifact.versioning.VersionRange;

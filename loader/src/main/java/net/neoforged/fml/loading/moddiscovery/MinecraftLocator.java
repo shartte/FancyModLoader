@@ -7,31 +7,46 @@ package net.neoforged.fml.loading.moddiscovery;
 
 import com.electronwill.nightconfig.core.Config;
 import com.mojang.logging.LogUtils;
+import cpw.mods.jarhandling.JarContents;
 import cpw.mods.jarhandling.JarContentsBuilder;
 import cpw.mods.jarhandling.SecureJar;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import net.neoforged.fml.loading.ClasspathTransformerDiscoverer;
 import net.neoforged.fml.loading.FMLLoader;
-import net.neoforged.fml.loading.LogMarkers;
 import net.neoforged.neoforgespi.language.IModFileInfo;
 import net.neoforged.neoforgespi.locating.IModFile;
 import net.neoforged.neoforgespi.locating.IModLocator;
+import net.neoforged.neoforgespi.locating.IModProvider;
 import net.neoforged.neoforgespi.locating.ModFileFactory;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
-public class MinecraftLocator extends AbstractModProvider implements IModLocator {
+public class MinecraftLocator implements IModProvider, IModLocator {
     private static final Logger LOGGER = LogUtils.getLogger();
 
     @Override
-    public List<IModLocator.ModFileOrException> scanMods() {
+    public @Nullable ModFileOrException provide(JarContents jar) {
+        return null;
+    }
+
+    @Override
+    public Stream<JarContents> scanCandidates() {
+        final var launchHandler = FMLLoader.getLaunchHandler();
+        var baseMC = launchHandler.getMinecraftPaths();
+        var otherModsExcluded = ClasspathTransformerDiscoverer.allExcluded();
+        var othermods = baseMC.otherModPaths().stream()
+                .filter(p -> p.stream().noneMatch(otherModsExcluded::contains)) //We cannot load MOD_CLASSES from the classpath if they are loaded on the SERVICE layer.
+                .map(set -> new JarContentsBuilder().paths(set.toArray(Path[]::new)).build());
+        var artifacts = baseMC.otherArtifacts().stream()
+                .map(pt -> new JarContentsBuilder().paths(pt).build());
+        return Stream.concat(othermods, artifacts);
+    }
+
+    @Override
+    public List<ModFileOrException> provide() {
         final var launchHandler = FMLLoader.getLaunchHandler();
         var baseMC = launchHandler.getMinecraftPaths();
         var mcJarContents = new JarContentsBuilder()
@@ -42,18 +57,8 @@ public class MinecraftLocator extends AbstractModProvider implements IModLocator
         var mcSecureJar = SecureJar.from(mcJarContents, mcJarMetadata);
         var mcjar = ModFileFactory.FACTORY.build(mcSecureJar, this, this::buildMinecraftTOML);
         mcJarMetadata.setModFile(mcjar);
-        var artifacts = baseMC.otherArtifacts().stream()
-                .map(SecureJar::from)
-                .map(sj -> new ModFile(sj, this, ModFileParser::modsTomlParser))
-                .collect(Collectors.<IModFile>toList());
-        var otherModsExcluded = ClasspathTransformerDiscoverer.allExcluded();
-        var othermods = baseMC.otherModPaths().stream()
-                .filter(p -> p.stream().noneMatch(otherModsExcluded::contains)) //We cannot load MOD_CLASSES from the classpath if they are loaded on the SERVICE layer.
-                .map(p -> createMod(p.toArray(Path[]::new)))
-                .filter(Objects::nonNull);
-        artifacts.add(mcjar);
 
-        return Stream.concat(artifacts.stream().map(f -> new ModFileOrException(f, null)), othermods).toList();
+        return List.of(new ModFileOrException(mcjar, null));
     }
 
     private IModFileInfo buildMinecraftTOML(final IModFile iModFile) {
@@ -112,18 +117,12 @@ public class MinecraftLocator extends AbstractModProvider implements IModLocator
     }
 
     @Override
-    public void scanFile(final IModFile modFile, final Consumer<Path> pathConsumer) {
-        LOGGER.debug(LogMarkers.SCAN, "Scan started: {}", modFile);
-        try (Stream<Path> files = Files.find(modFile.getSecureJar().getRootPath(), Integer.MAX_VALUE, (p, a) -> p.getNameCount() > 0 && p.getFileName().toString().endsWith(".class"))) {
-            files.forEach(pathConsumer);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        LOGGER.debug(LogMarkers.SCAN, "Scan finished: {}", modFile);
+    public void initArguments(final Map<String, ?> arguments) {
+        // no op
     }
 
     @Override
-    public void initArguments(final Map<String, ?> arguments) {
-        // no op
+    public boolean isValid(IModFile modFile) {
+        return true;
     }
 }

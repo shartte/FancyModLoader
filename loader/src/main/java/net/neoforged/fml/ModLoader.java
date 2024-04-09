@@ -34,8 +34,6 @@ import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.fml.loading.FMLLoader;
 import net.neoforged.fml.loading.ImmediateWindowHandler;
 import net.neoforged.fml.loading.LoadingModList;
-import net.neoforged.fml.loading.moddiscovery.AbstractModProvider;
-import net.neoforged.fml.loading.moddiscovery.InvalidModIdentifier;
 import net.neoforged.fml.loading.moddiscovery.ModFileInfo;
 import net.neoforged.fml.loading.moddiscovery.ModInfo;
 import net.neoforged.fml.loading.progress.ProgressMeter;
@@ -104,9 +102,7 @@ public class ModLoader {
         this.loadingExceptions = FMLLoader.getLoadingModList().getErrors().stream()
                 .flatMap(ModLoadingException::fromEarlyException)
                 .collect(Collectors.toList());
-        this.loadingWarnings = FMLLoader.getLoadingModList().getBrokenFiles().stream()
-                .map(file -> new ModLoadingWarning(null, ModLoadingStage.VALIDATE, InvalidModIdentifier.identifyJarProblem(file.getFilePath()).orElse("fml.modloading.brokenfile"), file.getFileName()))
-                .collect(Collectors.toList());
+        this.loadingWarnings = new ArrayList<>();
 
         FMLLoader.getLoadingModList().getWarnings().stream()
                 .flatMap(ModLoadingWarning::fromEarlyException)
@@ -282,7 +278,7 @@ public class ModLoader {
 
             var missingClasses = new ArrayList<>(modIds);
             missingClasses.removeAll(containerIds);
-            LOGGER.fatal(LOADING, "The following classes are missing, but are reported in the {}: {}", AbstractModProvider.MODS_TOML, missingClasses);
+            LOGGER.fatal(LOADING, "The following classes are missing, but are reported in the {}: {}", JarModsDotTomlModProvider.MODS_TOML, missingClasses);
 
             var missingMods = new ArrayList<>(containerIds);
             missingMods.removeAll(modIds);

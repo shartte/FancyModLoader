@@ -3,12 +3,11 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  */
 
-package net.neoforged.fml.loading.moddiscovery;
+package net.neoforged.neoforgespi.locating;
 
 import java.util.Locale;
 import java.util.Optional;
 import net.neoforged.neoforgespi.language.IModFileInfo;
-import net.neoforged.neoforgespi.locating.ModFileLoadingException;
 
 public class InvalidModFileException extends ModFileLoadingException {
     private final IModFileInfo modFileInfo;

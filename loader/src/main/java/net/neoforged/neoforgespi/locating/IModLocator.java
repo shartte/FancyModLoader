@@ -16,27 +16,28 @@
 
 package net.neoforged.neoforgespi.locating;
 
-import java.util.List;
+import cpw.mods.jarhandling.JarContents;
+import java.util.Map;
+import java.util.stream.Stream;
 
 /**
- * Loaded as a ServiceLoader. Takes mechanisms for locating candidate "mods"
- * and transforms them into {@link IModFile} objects.
+ * Loaded as a ServiceLoader. Takes mechanisms for locating candidate "mod" JARs.
  */
-public interface IModLocator extends IModProvider {
+public interface IModLocator {
     /**
-     * A simple record which contains either a valid modfile or a reason one failed to be constructed by {@link #scanMods()}
-     * 
-     * @param file the file
-     * @param ex   an exception that occurred during the attempt to load the mod
+     * {@return all mod paths that this mod locator can find}
      */
-    record ModFileOrException(IModFile file, ModFileLoadingException ex) {}
+    Stream<JarContents> scanCandidates();
 
     /**
-     * Invoked to find all mods that this mod locator can find.
-     * It is not guaranteed that all these are loaded into the runtime,
-     * as such the result of this method should be seen as a list of candidates to load.
-     *
-     * @return All found, or discovered, mod files.
+     * {@return the name of this locator}
      */
-    List<ModFileOrException> scanMods();
+    String name();
+
+    /**
+     * Invoked with the game startup arguments to allow for configuration of the provider.
+     *
+     * @param arguments The arguments.
+     */
+    default void initArguments(Map<String, ?> arguments) {}
 }

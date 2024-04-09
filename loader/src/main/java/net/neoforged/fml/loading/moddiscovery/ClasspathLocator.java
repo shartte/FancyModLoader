@@ -6,6 +6,7 @@
 package net.neoforged.fml.loading.moddiscovery;
 
 import com.mojang.logging.LogUtils;
+import cpw.mods.jarhandling.SecureJar;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -33,7 +34,7 @@ public class ClasspathLocator extends AbstractJarFileModLocator {
     }
 
     @Override
-    public Stream<Path> scanCandidates() {
+    public Stream<SecureJar> scanCandidates() {
         if (!enabled)
             return Stream.of();
 
@@ -41,10 +42,10 @@ public class ClasspathLocator extends AbstractJarFileModLocator {
             var claimed = new ArrayList<>(legacyClasspath);
             var paths = Stream.<Path>builder();
 
-            findPaths(claimed, MODS_TOML).forEach(paths::add);
-            findPaths(claimed, MANIFEST).forEach(paths::add);
+            findPaths(claimed, JarModsDotTomlModProvider.MODS_TOML).forEach(paths::add);
+            findPaths(claimed, JarModsDotTomlModProvider.MANIFEST).forEach(paths::add);
 
-            return paths.build();
+            return paths.build().map(SecureJar::from);
         } catch (IOException e) {
             LOGGER.error(LogMarkers.SCAN, "Error trying to find resources", e);
             throw new RuntimeException(e);

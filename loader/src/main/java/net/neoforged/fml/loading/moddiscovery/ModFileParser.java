@@ -20,6 +20,7 @@ import java.util.Optional;
 import net.neoforged.fml.loading.LogMarkers;
 import net.neoforged.neoforgespi.language.IModFileInfo;
 import net.neoforged.neoforgespi.locating.IModFile;
+import net.neoforged.neoforgespi.locating.InvalidModFileException;
 import net.neoforged.neoforgespi.locating.ModFileFactory;
 import org.slf4j.Logger;
 
@@ -33,9 +34,9 @@ public class ModFileParser {
     public static IModFileInfo modsTomlParser(final IModFile imodFile) {
         ModFile modFile = (ModFile) imodFile;
         LOGGER.debug(LogMarkers.LOADING, "Considering mod file candidate {}", modFile.getFilePath());
-        final Path modsjson = modFile.findResource(AbstractModProvider.MODS_TOML);
+        final Path modsjson = modFile.findResource(JarModsDotTomlModProvider.MODS_TOML);
         if (!Files.exists(modsjson)) {
-            LOGGER.warn(LogMarkers.LOADING, "Mod file {} is missing {} file", modFile.getFilePath(), AbstractModProvider.MODS_TOML);
+            LOGGER.warn(LogMarkers.LOADING, "Mod file {} is missing {} file", modFile.getFilePath(), JarModsDotTomlModProvider.MODS_TOML);
             return null;
         }
 

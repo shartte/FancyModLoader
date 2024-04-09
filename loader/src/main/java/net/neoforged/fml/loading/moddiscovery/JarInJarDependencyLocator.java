@@ -8,36 +8,61 @@ package net.neoforged.fml.loading.moddiscovery;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.mojang.logging.LogUtils;
+import cpw.mods.jarhandling.JarContents;
+import cpw.mods.jarhandling.JarContentsBuilder;
+import cpw.mods.jarhandling.SecureJar;
+import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import net.neoforged.fml.loading.EarlyLoadingException;
 import net.neoforged.jarjar.selection.JarSelector;
 import net.neoforged.neoforgespi.language.IModInfo;
+import net.neoforged.neoforgespi.locating.IDependencyLocator;
 import net.neoforged.neoforgespi.locating.IModFile;
+import net.neoforged.neoforgespi.locating.IModProvider;
+import net.neoforged.neoforgespi.locating.ModFileFactory;
 import net.neoforged.neoforgespi.locating.ModFileLoadingException;
 import org.apache.maven.artifact.versioning.ArtifactVersion;
 import org.apache.maven.artifact.versioning.VersionRange;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
-public class JarInJarDependencyLocator extends AbstractJarFileDependencyLocator {
+public class JarInJarDependencyLocator implements IDependencyLocator, IModProvider {
     private static final Logger LOGGER = LogUtils.getLogger();
 
     @Override
     public String name() {
-        return "JarInJar";
+        return "jarinjar";
     }
 
     @Override
-    public List<IModFile> scanMods(final Iterable<IModFile> loadedMods) {
+    public void scanFile(IModFile modFile, Consumer<Path> pathConsumer) {}
+
+    @Override
+    public boolean isValid(IModFile modFile) {
+        return true;
+    }
+
+    @Override
+    public @Nullable ModFileOrException provide(JarContents jar) {
+        return null;
+    }
+
+    @Override
+    public List<IModFile> scanMods(Iterable<IModFile> loadedMods, Function<JarContents, Optional<ModFileOrException>> provider) {
         final List<IModFile> sources = Lists.newArrayList();
         loadedMods.forEach(sources::add);
 
@@ -52,26 +77,21 @@ public class JarInJarDependencyLocator extends AbstractJarFileDependencyLocator 
         return dependenciesToLoad;
     }
 
-    @Override
-    public void initArguments(final Map<String, ?> arguments) {
-        // NO-OP, for now
-    }
-
-    @Override
-    protected String getDefaultJarModType() {
-        return IModFile.Type.LIBRARY.name();
-    }
-
     @SuppressWarnings("resource")
     @Override
-    protected Optional<IModFile> loadModFileFrom(final IModFile file, final Path path) {
+    protected Optional<IModFile> loadModFileFrom(final IModFile file, final Path path, Function<JarContents, Optional<IModProvider.ModFileOrException>> provider) {
         try {
             final Path pathInModFile = file.findResource(path.toString());
             final URI filePathUri = new URI("jij:" + (pathInModFile.toAbsolutePath().toUri().getRawSchemeSpecificPart())).normalize();
             final Map<String, ?> outerFsArgs = ImmutableMap.of("packagePath", pathInModFile);
             final FileSystem zipFS = FileSystems.newFileSystem(filePathUri, outerFsArgs);
-            final Path pathInFS = zipFS.getPath("/");
-            return Optional.of(createMod(pathInFS).file());
+            final var jar = new JarContentsBuilder().paths(zipFS.getPath("/")).build();
+            final var fileOrEx = provider.apply(jar)
+                    .orElseGet(() -> new ModFileOrException(ModFileFactory.FACTORY.build(SecureJar.from(jar), this, JarModsDotTomlModProvider::manifestParser, IModFile.Type.LIBRARY), null));
+            if (fileOrEx.ex() != null) {
+                throw fileOrEx.ex();
+            }
+            return Optional.of(fileOrEx.file());
         } catch (Exception e) {
             LOGGER.error("Failed to load mod file {} from {}", path, file.getFileName());
             final RuntimeException exception = new ModFileLoadingException("Failed to load mod file " + file.getFileName());
@@ -117,7 +137,6 @@ public class JarInJarDependencyLocator extends AbstractJarFileDependencyLocator 
         return "\u00a7e" + modWithVersionRange.modInfo().getModId() + "\u00a7r - \u00a74" + modWithVersionRange.versionRange().toString() + "\u00a74 - \u00a72" + modWithVersionRange.artifactVersion().toString() + "\u00a72";
     }
 
-    @Override
     protected String identifyMod(final IModFile modFile) {
         if (modFile.getModFileInfo() == null || modFile.getModInfos().isEmpty()) {
             return modFile.getFileName();
@@ -127,4 +146,16 @@ public class JarInJarDependencyLocator extends AbstractJarFileDependencyLocator 
     }
 
     private record ModWithVersionRange(IModInfo modInfo, VersionRange versionRange, ArtifactVersion artifactVersion) {}
+
+    protected Optional<InputStream> loadResourceFromModFile(final IModFile modFile, final Path path) {
+        try {
+            return Optional.of(Files.newInputStream(modFile.findResource(path.toString())));
+        } catch (final NoSuchFileException e) {
+            LOGGER.trace("Failed to load resource {} from {}, it does not contain dependency information.", path, modFile.getFileName());
+            return Optional.empty();
+        } catch (final Exception e) {
+            LOGGER.error("Failed to load resource {} from mod {}, cause {}", path, modFile.getFileName(), e);
+            return Optional.empty();
+        }
+    }
 }

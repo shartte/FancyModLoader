@@ -68,7 +68,7 @@ public class ModSorter {
 
         // if we miss a dependency or detect an incompatibility, we abort now
         if (!resolutionResult.versionResolution.isEmpty() || !resolutionResult.incompatibilities.isEmpty()) {
-            list = LoadingModList.of(ms.systemMods, ms.systemMods.stream().map(mf -> (ModInfo) mf.getModInfos().get(0)).collect(toList()), new EarlyLoadingException("failure to validate mod list", null, resolutionResult.buildErrorMessages()));
+            list = LoadingModList.of(ms.systemMods, ms.systemMods.stream().map(mf -> (ModInfo) mf.getModInfos().get(0)).collect(toList()), new EarlyLoadingException("failure to validate mod list", null, listOf(errors, resolutionResult.buildErrorMessages())));
         } else {
             // Otherwise, lets try and sort the modlist and proceed
             EarlyLoadingException earlyLoadingException = null;
@@ -77,7 +77,11 @@ public class ModSorter {
             } catch (EarlyLoadingException e) {
                 earlyLoadingException = e;
             }
-            list = LoadingModList.of(ms.modFiles, ms.sortedList, earlyLoadingException);
+            if (earlyLoadingException == null) {
+                list = LoadingModList.of(ms.modFiles, ms.sortedList, errors.isEmpty() ? null : new EarlyLoadingException("early loading exception", null, errors));
+            } else {
+                list = LoadingModList.of(ms.modFiles, ms.sortedList, new EarlyLoadingException(earlyLoadingException.getMessage(), earlyLoadingException.getCause(), listOf(earlyLoadingException.getAllData(), errors)));
+            }
         }
 
         // If we have conflicts those are considered warnings
@@ -88,6 +92,15 @@ public class ModSorter {
                     resolutionResult.buildWarningMessages()));
         }
         return list;
+    }
+
+    @SafeVarargs
+    private static <T> List<T> listOf(List<T>... lists) {
+        var lst = new ArrayList<T>();
+        for (List<T> list : lists) {
+            lst.addAll(list);
+        }
+        return lst;
     }
 
     @SuppressWarnings("UnstableApiUsage")
