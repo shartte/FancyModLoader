@@ -6,7 +6,6 @@
 package net.neoforged.fml.loading.moddiscovery.locators;
 
 import cpw.mods.jarhandling.JarContents;
-import cpw.mods.jarhandling.JarContentsBuilder;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,9 +20,7 @@ public class ExplodedDirectoryLocator implements IModLocator {
 
     @Override
     public Stream<JarContents> scanCandidates() {
-        return explodedMods.stream().map(explodedMod -> {
-            return new JarContentsBuilder().paths(explodedMod.paths().toArray(Path[]::new)).build();
-        });
+        return explodedMods.stream().map(ExplodedMod::paths).map(JarContents::of);
     }
 
     @Override

@@ -71,7 +71,7 @@ public class ClasspathTransformerDiscoverer implements ITransformerDiscoveryServ
     private void scanModClasses() {
         final Map<String, List<Path>> modClassPaths = CommonLaunchHandler.getModClasses();
         modClassPaths.forEach((modid, paths) -> {
-            if (shouldLoadInServiceLayer(paths.toArray(Path[]::new))) {
+            if (shouldLoadInServiceLayer(paths)) {
                 found.add(new NamedPath(modid, paths.toArray(Path[]::new)));
             }
         });

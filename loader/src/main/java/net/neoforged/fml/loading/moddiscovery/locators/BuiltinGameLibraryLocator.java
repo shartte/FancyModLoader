@@ -6,7 +6,6 @@
 package net.neoforged.fml.loading.moddiscovery.locators;
 
 import cpw.mods.jarhandling.JarContents;
-import cpw.mods.jarhandling.JarContentsBuilder;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
@@ -40,6 +39,6 @@ public class BuiltinGameLibraryLocator extends AbstractJarFileModLocator {
                 paths.add(path);
         }
 
-        return paths.build().map(p -> new JarContentsBuilder().paths(p).build());
+        return paths.build().map(JarContents::of);
     }
 }

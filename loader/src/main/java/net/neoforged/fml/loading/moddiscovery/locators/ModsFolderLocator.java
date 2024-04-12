@@ -7,12 +7,10 @@ package net.neoforged.fml.loading.moddiscovery.locators;
 
 import com.mojang.logging.LogUtils;
 import cpw.mods.jarhandling.JarContents;
-import cpw.mods.jarhandling.JarContentsBuilder;
 import cpw.mods.modlauncher.api.LambdaExceptionUtils;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
-import java.util.Map;
 import java.util.stream.Stream;
 import net.neoforged.fml.loading.FMLPaths;
 import net.neoforged.fml.loading.LogMarkers;
@@ -50,7 +48,7 @@ public class ModsFolderLocator extends AbstractJarFileModLocator {
         return LambdaExceptionUtils.uncheck(() -> Files.list(this.modFolder))
                 .filter(p -> !excluded.contains(p) && StringUtils.toLowerCase(p.getFileName().toString()).endsWith(SUFFIX))
                 .sorted(Comparator.comparing(path -> StringUtils.toLowerCase(path.getFileName().toString())))
-                .map(p -> new JarContentsBuilder().paths(p).build());
+                .map(JarContents::of);
     }
 
     @Override

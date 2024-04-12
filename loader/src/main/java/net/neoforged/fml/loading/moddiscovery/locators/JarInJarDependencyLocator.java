@@ -9,7 +9,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.mojang.logging.LogUtils;
 import cpw.mods.jarhandling.JarContents;
-import cpw.mods.jarhandling.JarContentsBuilder;
 import cpw.mods.jarhandling.SecureJar;
 import java.io.InputStream;
 import java.net.URI;
@@ -89,7 +88,7 @@ public class JarInJarDependencyLocator implements IDependencyLocator, IModProvid
             final URI filePathUri = new URI("jij:" + (pathInModFile.toAbsolutePath().toUri().getRawSchemeSpecificPart())).normalize();
             final Map<String, ?> outerFsArgs = ImmutableMap.of("packagePath", pathInModFile);
             final FileSystem zipFS = FileSystems.newFileSystem(filePathUri, outerFsArgs);
-            final var jar = new JarContentsBuilder().paths(zipFS.getPath("/")).build();
+            final var jar = JarContents.of(zipFS.getPath("/"));
             final var fileOrEx = provider.apply(jar)
                     .orElseGet(() -> new ModFileOrException(ModFileFactory.FACTORY.build(SecureJar.from(jar), this, JarModsDotTomlModProvider::manifestParser, IModFile.Type.LIBRARY), null));
             if (fileOrEx.ex() != null) {

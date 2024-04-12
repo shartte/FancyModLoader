@@ -7,14 +7,10 @@ package net.neoforged.fml.loading.moddiscovery.locators;
 
 import com.mojang.logging.LogUtils;
 import cpw.mods.jarhandling.JarContents;
-import cpw.mods.jarhandling.JarContentsBuilder;
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
@@ -46,7 +42,7 @@ public class ClasspathLocator extends AbstractJarFileModLocator {
             findPaths(claimed, JarModsDotTomlModProvider.MODS_TOML).forEach(paths::add);
             findPaths(claimed, JarModsDotTomlModProvider.MANIFEST).forEach(paths::add);
 
-            return paths.build().map(p -> new JarContentsBuilder().paths(p).build());
+            return paths.build().map(JarContents::of);
         } catch (IOException e) {
             LOGGER.error(LogMarkers.SCAN, "Error trying to find resources", e);
             throw new RuntimeException(e);

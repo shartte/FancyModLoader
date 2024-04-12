@@ -115,7 +115,6 @@ public abstract class CommonDevLaunchHandler extends CommonLaunchHandler {
                 })
                 .paths(minecraft.stream().distinct().toArray(Path[]::new))
                 .build());
-        //modJar.getPackages().stream().sorted().forEach(System.out::println);
         mods.add(List.of(modJar.getRootPath()));
 
         return mcFilter;

@@ -6,13 +6,11 @@
 package net.neoforged.fml.loading.moddiscovery.locators;
 
 import com.electronwill.nightconfig.core.Config;
-import com.mojang.logging.LogUtils;
 import cpw.mods.jarhandling.JarContents;
 import cpw.mods.jarhandling.JarContentsBuilder;
 import cpw.mods.jarhandling.SecureJar;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Stream;
 import net.neoforged.fml.loading.ClasspathTransformerDiscoverer;
 import net.neoforged.fml.loading.FMLLoader;
@@ -26,7 +24,6 @@ import net.neoforged.neoforgespi.locating.IModLocator;
 import net.neoforged.neoforgespi.locating.IModProvider;
 import net.neoforged.neoforgespi.locating.ModFileFactory;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
 
 public class MinecraftLocator implements IModProvider, IModLocator {
     @Override

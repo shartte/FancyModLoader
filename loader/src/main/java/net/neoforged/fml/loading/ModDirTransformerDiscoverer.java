@@ -89,6 +89,6 @@ public class ModDirTransformerDiscoverer implements ITransformerDiscoveryService
         if (!path.toString().endsWith(".jar")) return false;
         if (LambdaExceptionUtils.uncheck(() -> Files.size(path)) == 0) return false;
 
-        return TransformerDiscovererConstants.shouldLoadInServiceLayer(path);
+        return TransformerDiscovererConstants.shouldLoadInServiceLayer(List.of(path));
     }
 }
