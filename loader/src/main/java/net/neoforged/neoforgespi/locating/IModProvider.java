@@ -52,7 +52,7 @@ public interface IModProvider {
     boolean isValid(IModFile modFile);
 
     /**
-     * A simple record which contains either a valid modfile or a reason one failed to be constructed by {@link #scanMods()}
+     * A simple record which contains either a valid modfile or a reason one failed to be constructed by {@link #scanFile}
      * 
      * @param file the file
      * @param ex   an exception that occurred during the attempt to load the mod

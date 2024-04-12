@@ -29,8 +29,6 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
 public class MinecraftLocator implements IModProvider, IModLocator {
-    private static final Logger LOGGER = LogUtils.getLogger();
-
     @Override
     public @Nullable ModFileOrException provide(JarContents jar) {
         return null;
@@ -67,17 +65,6 @@ public class MinecraftLocator implements IModProvider, IModLocator {
 
     private IModFileInfo buildMinecraftTOML(final IModFile iModFile) {
         final ModFile modFile = (ModFile) iModFile;
-        /*
-        final Path mcmodtoml = modFile.findResource("META-INF", "minecraftmod.toml");
-        if (Files.notExists(mcmodtoml)) {
-            LOGGER.fatal(LOADING, "Mod file {} is missing minecraftmod.toml file", modFile.getFilePath());
-            return null;
-        }
-        
-        final FileConfig mcmodstomlfile = FileConfig.builder(mcmodtoml).build();
-        mcmodstomlfile.load();
-        mcmodstomlfile.close();
-        */
 
         // We haven't changed this in years, and I can't be asked right now to special case this one file in the path.
         final var conf = Config.inMemory();
@@ -93,36 +80,14 @@ public class MinecraftLocator implements IModProvider, IModLocator {
         mods.set("authors", "MCP: Searge,ProfMobius,IngisKahn,Fesh0r,ZeuX,R4wk,LexManos,Bspkrs");
         mods.set("description", "Minecraft, decompiled and deobfuscated with MCP technology");
         conf.set("mods", List.of(mods));
-        /*
-        conf.putAll(mcmodstomlfile);
-        
-        final var extralangs = Stream.<IModFileInfo.LanguageSpec>builder();
-        final Path forgemodtoml = modFile.findResource("META-INF", "mods.toml");
-        if (Files.notExists(forgemodtoml)) {
-            LOGGER.info("No forge mods.toml file found, not loading forge mod");
-        } else {
-            final FileConfig forgemodstomlfile = FileConfig.builder(forgemodtoml).build();
-            forgemodstomlfile.load();
-            forgemodstomlfile.close();
-            conf.putAll(forgemodstomlfile);
-            conf.<List<Object>>get("mods").add(0, mcmodstomlfile.<List<Object>>get("mods").get(0)); // Add MC as a sub-mod
-            extralangs.add(new IModFileInfo.LanguageSpec(mcmodstomlfile.get("modLoader"), MavenVersionAdapter.createFromVersionSpec(mcmodstomlfile.get("loaderVersion"))));
-        }
-        */
 
         final NightConfigWrapper configWrapper = new NightConfigWrapper(conf);
-        //final ModFileInfo modFileInfo = new ModFileInfo(modFile, configWrapper, extralangs.build().toList());
         return new ModFileInfo(modFile, configWrapper, configWrapper::setFile, List.of());
     }
 
     @Override
     public String name() {
         return "minecraft";
-    }
-
-    @Override
-    public void initArguments(final Map<String, ?> arguments) {
-        // no op
     }
 
     @Override

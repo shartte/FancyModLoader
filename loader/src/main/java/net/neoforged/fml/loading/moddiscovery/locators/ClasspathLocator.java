@@ -71,22 +71,4 @@ public class ClasspathLocator extends AbstractJarFileModLocator {
         var launchTarget = (String) arguments.get("launchTarget");
         enabled = launchTarget != null && launchTarget.contains("dev");
     }
-
-    private Path findJarPathFor(final String resourceName, final String jarName, final URL resource) {
-        try {
-            Path path;
-            final URI uri = resource.toURI();
-            if (uri.getScheme().equals("jar") && uri.getRawSchemeSpecificPart().contains("!/")) {
-                int lastExcl = uri.getRawSchemeSpecificPart().lastIndexOf("!/");
-                path = Paths.get(new URI(uri.getRawSchemeSpecificPart().substring(0, lastExcl)));
-            } else {
-                path = Paths.get(new URI("file://" + uri.getRawSchemeSpecificPart().substring(0, uri.getRawSchemeSpecificPart().length() - resourceName.length())));
-            }
-            //LOGGER.debug(CORE, "Found JAR {} at path {}", jarName, path.toString());
-            return path;
-        } catch (NullPointerException | URISyntaxException e) {
-            LOGGER.error(LogMarkers.SCAN, "Failed to find JAR for class {} - {}", resourceName, jarName);
-            throw new RuntimeException("Unable to locate " + resourceName + " - " + jarName, e);
-        }
-    }
 }

@@ -62,7 +62,4 @@ public class ModsFolderLocator extends AbstractJarFileModLocator {
     public String toString() {
         return "{" + customName + " locator at " + this.modFolder + "}";
     }
-
-    @Override
-    public void initArguments(final Map<String, ?> arguments) {}
 }

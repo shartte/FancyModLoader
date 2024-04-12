@@ -5,7 +5,6 @@
 
 package net.neoforged.fml.loading.moddiscovery.locators;
 
-import com.mojang.logging.LogUtils;
 import cpw.mods.jarhandling.JarContents;
 import cpw.mods.jarhandling.JarContentsBuilder;
 import java.nio.file.Path;
@@ -14,11 +13,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 import net.neoforged.neoforgespi.locating.IModLocator;
-import org.slf4j.Logger;
 
 public class ExplodedDirectoryLocator implements IModLocator {
-    private static final Logger LOGGER = LogUtils.getLogger();
-
     public record ExplodedMod(String modid, List<Path> paths) {}
 
     private final List<ExplodedMod> explodedMods = new ArrayList<>();
