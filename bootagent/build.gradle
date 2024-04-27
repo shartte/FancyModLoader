@@ -1,0 +1,26 @@
+jar {
+    manifest {
+        attributes("Premain-Class": "net.neoforged.bootagent.BootAgent")
+    }
+}
+
+configurations {
+    testmodule
+}
+
+dependencies {
+    testmodule project(":bootagent:testmodule")
+}
+
+tasks.register('runWithAgent', JavaExec) {
+    dependsOn(jar, testClasses, configurations.testmodule)
+    mainClass = "net.neoforged.bootagent.Test"
+    classpath sourceSets.test.runtimeClasspath
+    jvmArgumentProviders.add(new CommandLineArgumentProvider() {
+        @Override
+        Iterable<String> asArguments() {
+            return List.of("-javaagent:" + jar.archiveFile.get().asFile.absolutePath,
+                    "-Dtestmodule.path=" + configurations.testmodule.singleFile.absolutePath)
+        }
+    })
+}

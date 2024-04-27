@@ -24,3 +24,5 @@ rootProject.name = 'FancyModLoader'
 
 include 'loader'
 include 'earlydisplay'
+include 'bootagent'
+include 'bootagent:testmodule'
