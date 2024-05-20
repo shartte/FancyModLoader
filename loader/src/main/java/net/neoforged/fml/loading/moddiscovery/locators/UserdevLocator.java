@@ -31,7 +31,7 @@ public class UserdevLocator implements IModFileCandidateLocator {
         var claimed = modFolders.values().stream().flatMap(List::stream).collect(Collectors.toCollection(HashSet::new));
 
         for (var modFolderGroup : modFolders.values()) {
-            pipeline.addPath(modFolderGroup, ModFileDiscoveryAttributes.DEFAULT, IncompatibleFileReporting.ERROR);
+            pipeline.addPath(modFolderGroup, ModFileDiscoveryAttributes.DEFAULT, IncompatibleFileReporting.WARN_ALWAYS);
         }
 
         var fromClasspath = new ArrayList<Path>();
