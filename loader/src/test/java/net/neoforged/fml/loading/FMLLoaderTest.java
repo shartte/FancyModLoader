@@ -508,6 +508,21 @@ class FMLLoaderTest extends LauncherTest {
         }
 
         @Test
+        void testIncompatibleModsTomlInUserdev() throws Exception {
+            var additionalClasspath = installation.setupUserdevProject();
+
+            var mainModule = installation.setupGradleModule(new IdentifiableContent("MOD_TOML", "META-INF/mods.toml"));
+            additionalClasspath.addAll(mainModule);
+
+            // Tell FML that the classes and resources directory belong together
+            SimulatedInstallation.setModFoldersProperty(Map.of("mod", mainModule));
+
+            var result = launchWithAdditionalClasspath("forgeclientuserdev", additionalClasspath);
+            assertThat(result.issues()).containsOnly(
+                    ModLoadingIssue.warning("fml.modloading.brokenfile.minecraft_forge", mainModule.getFirst()).withAffectedPath(mainModule.getFirst()));
+        }
+
+        @Test
         void testFabricMod() throws Exception {
             installation.setupProductionClient();
             var path = installation.writeModJar("mod.jar", new IdentifiableContent("FABRIC_MOD_JSON", "fabric.mod.json"));
