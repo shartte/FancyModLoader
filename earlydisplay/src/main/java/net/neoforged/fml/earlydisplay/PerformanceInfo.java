@@ -5,34 +5,28 @@
 
 package net.neoforged.fml.earlydisplay;
 
-import com.sun.management.OperatingSystemMXBean;
-import java.lang.management.ManagementFactory;
-import java.lang.management.MemoryMXBean;
-import java.lang.management.MemoryUsage;
-
 public class PerformanceInfo {
-    private final OperatingSystemMXBean osBean;
-    private final MemoryMXBean memoryBean;
+    final PerformanceInfoSource performanceInfoSource;
     float memory;
     private String text = "";
 
-    PerformanceInfo() {
-        osBean = ManagementFactory.getPlatformMXBean(OperatingSystemMXBean.class);
-        memoryBean = ManagementFactory.getMemoryMXBean();
+    public PerformanceInfo(PerformanceInfoSource performanceInfoSource) {
+        this.performanceInfoSource = performanceInfoSource;
     }
 
     void update() {
-        final MemoryUsage heapusage = memoryBean.getHeapMemoryUsage();
-        memory = (float) heapusage.getUsed() / heapusage.getMax();
-        var cpuLoad = osBean.getProcessCpuLoad();
-        String cpuText;
-        if (cpuLoad == -1) {
-            cpuText = String.format("*CPU: %.1f%%", osBean.getCpuLoad() * 100f);
-        } else {
-            cpuText = String.format("CPU: %.1f%%", cpuLoad * 100f);
+        if (performanceInfoSource == null) {
+            return;
         }
+        var heapUsed = performanceInfoSource.memoryUsed();
+        var heapMax = performanceInfoSource.memoryMax();
+        var offHeapUsed = performanceInfoSource.offHeapUsed();
 
-        text = String.format("Heap: %d/%d MB (%.1f%%) OffHeap: %d MB  %s", heapusage.getUsed() >> 20, heapusage.getMax() >> 20, memory * 100.0, memoryBean.getNonHeapMemoryUsage().getUsed() >> 20, cpuText);
+        memory = (float) heapUsed / heapMax;
+        var cpuLoad = performanceInfoSource.cpuUsagePercentage();
+        var cpuText = String.format("CPU: %.1f%%", cpuLoad * 100f);
+
+        text = String.format("Heap: %d/%d MB (%.1f%%) OffHeap: %d MB  %s", heapUsed >> 20, heapMax >> 20, memory * 100.0, offHeapUsed >> 20, cpuText);
     }
 
     String text() {
@@ -41,5 +35,9 @@ public class PerformanceInfo {
 
     float memory() {
         return memory;
+    }
+
+    boolean isDisabled() {
+        return performanceInfoSource == null;
     }
 }

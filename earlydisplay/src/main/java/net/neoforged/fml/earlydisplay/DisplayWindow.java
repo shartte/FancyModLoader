@@ -5,12 +5,31 @@
 
 package net.neoforged.fml.earlydisplay;
 
-import static org.lwjgl.glfw.GLFW.*;
-import static org.lwjgl.opengl.GL.createCapabilities;
-import static org.lwjgl.opengl.GL32C.*;
+import joptsimple.OptionParser;
+import net.neoforged.fml.loading.FMLConfig;
+import net.neoforged.fml.loading.FMLPaths;
+import net.neoforged.fml.loading.ImmediateWindowHandler;
+import net.neoforged.fml.loading.progress.StartupNotificationManager;
+import net.neoforged.neoforgespi.earlywindow.ImmediateWindowProvider;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
+import org.lwjgl.PointerBuffer;
+import org.lwjgl.glfw.GLFWImage;
+import org.lwjgl.glfw.GLFWVidMode;
+import org.lwjgl.opengl.GLUtil;
+import org.lwjgl.stb.STBIWriteCallback;
+import org.lwjgl.stb.STBImage;
+import org.lwjgl.stb.STBImageWrite;
+import org.lwjgl.system.Callback;
+import org.lwjgl.system.MemoryStack;
+import org.lwjgl.system.MemoryUtil;
+import org.lwjgl.util.tinyfd.TinyFileDialogs;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.awt.Desktop;
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.Method;
@@ -43,43 +62,93 @@ import java.util.function.LongSupplier;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
-import joptsimple.OptionParser;
-import net.neoforged.fml.loading.FMLConfig;
-import net.neoforged.fml.loading.FMLPaths;
-import net.neoforged.fml.loading.ImmediateWindowHandler;
-import net.neoforged.fml.loading.progress.StartupNotificationManager;
-import net.neoforged.neoforgespi.earlywindow.ImmediateWindowProvider;
-import org.jetbrains.annotations.Nullable;
-import org.lwjgl.PointerBuffer;
-import org.lwjgl.glfw.GLFWImage;
-import org.lwjgl.glfw.GLFWVidMode;
-import org.lwjgl.stb.STBImage;
-import org.lwjgl.system.MemoryStack;
-import org.lwjgl.system.MemoryUtil;
-import org.lwjgl.util.tinyfd.TinyFileDialogs;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import static org.lwjgl.glfw.GLFW.GLFW_CLIENT_API;
+import static org.lwjgl.glfw.GLFW.GLFW_CONTEXT_CREATION_API;
+import static org.lwjgl.glfw.GLFW.GLFW_CONTEXT_VERSION_MAJOR;
+import static org.lwjgl.glfw.GLFW.GLFW_CONTEXT_VERSION_MINOR;
+import static org.lwjgl.glfw.GLFW.GLFW_FALSE;
+import static org.lwjgl.glfw.GLFW.GLFW_NATIVE_CONTEXT_API;
+import static org.lwjgl.glfw.GLFW.GLFW_NO_ERROR;
+import static org.lwjgl.glfw.GLFW.GLFW_OPENGL_API;
+import static org.lwjgl.glfw.GLFW.GLFW_OPENGL_CORE_PROFILE;
+import static org.lwjgl.glfw.GLFW.GLFW_OPENGL_DEBUG_CONTEXT;
+import static org.lwjgl.glfw.GLFW.GLFW_OPENGL_FORWARD_COMPAT;
+import static org.lwjgl.glfw.GLFW.GLFW_OPENGL_PROFILE;
+import static org.lwjgl.glfw.GLFW.GLFW_RESIZABLE;
+import static org.lwjgl.glfw.GLFW.GLFW_TRUE;
+import static org.lwjgl.glfw.GLFW.GLFW_VISIBLE;
+import static org.lwjgl.glfw.GLFW.GLFW_X11_CLASS_NAME;
+import static org.lwjgl.glfw.GLFW.GLFW_X11_INSTANCE_NAME;
+import static org.lwjgl.glfw.GLFW.glfwCreateWindow;
+import static org.lwjgl.glfw.GLFW.glfwDefaultWindowHints;
+import static org.lwjgl.glfw.GLFW.glfwGetError;
+import static org.lwjgl.glfw.GLFW.glfwGetFramebufferSize;
+import static org.lwjgl.glfw.GLFW.glfwGetMonitorPos;
+import static org.lwjgl.glfw.GLFW.glfwGetPrimaryMonitor;
+import static org.lwjgl.glfw.GLFW.glfwGetVideoMode;
+import static org.lwjgl.glfw.GLFW.glfwGetWindowAttrib;
+import static org.lwjgl.glfw.GLFW.glfwGetWindowPos;
+import static org.lwjgl.glfw.GLFW.glfwGetWindowSize;
+import static org.lwjgl.glfw.GLFW.glfwInit;
+import static org.lwjgl.glfw.GLFW.glfwMakeContextCurrent;
+import static org.lwjgl.glfw.GLFW.glfwMaximizeWindow;
+import static org.lwjgl.glfw.GLFW.glfwPollEvents;
+import static org.lwjgl.glfw.GLFW.glfwSetFramebufferSizeCallback;
+import static org.lwjgl.glfw.GLFW.glfwSetWindowIcon;
+import static org.lwjgl.glfw.GLFW.glfwSetWindowPos;
+import static org.lwjgl.glfw.GLFW.glfwSetWindowPosCallback;
+import static org.lwjgl.glfw.GLFW.glfwSetWindowSizeCallback;
+import static org.lwjgl.glfw.GLFW.glfwSetWindowTitle;
+import static org.lwjgl.glfw.GLFW.glfwShowWindow;
+import static org.lwjgl.glfw.GLFW.glfwSwapBuffers;
+import static org.lwjgl.glfw.GLFW.glfwSwapInterval;
+import static org.lwjgl.glfw.GLFW.glfwWindowHint;
+import static org.lwjgl.glfw.GLFW.glfwWindowHintString;
+import static org.lwjgl.opengl.GL.createCapabilities;
+import static org.lwjgl.opengl.GL32C.GL_BLEND;
+import static org.lwjgl.opengl.GL32C.GL_COLOR_BUFFER_BIT;
+import static org.lwjgl.opengl.GL32C.GL_DEPTH_BUFFER_BIT;
+import static org.lwjgl.opengl.GL32C.GL_FRAMEBUFFER;
+import static org.lwjgl.opengl.GL32C.GL_ONE_MINUS_SRC_ALPHA;
+import static org.lwjgl.opengl.GL32C.GL_READ_FRAMEBUFFER_BINDING;
+import static org.lwjgl.opengl.GL32C.GL_RENDERER;
+import static org.lwjgl.opengl.GL32C.GL_SRC_ALPHA;
+import static org.lwjgl.opengl.GL32C.GL_TRUE;
+import static org.lwjgl.opengl.GL32C.GL_VENDOR;
+import static org.lwjgl.opengl.GL32C.GL_VERSION;
+import static org.lwjgl.opengl.GL32C.GL_VERTEX_ARRAY_BINDING;
+import static org.lwjgl.opengl.GL32C.glBindFramebuffer;
+import static org.lwjgl.opengl.GL32C.glBindVertexArray;
+import static org.lwjgl.opengl.GL32C.glBlendFunc;
+import static org.lwjgl.opengl.GL32C.glClear;
+import static org.lwjgl.opengl.GL32C.glClearColor;
+import static org.lwjgl.opengl.GL32C.glEnable;
+import static org.lwjgl.opengl.GL32C.glGetInteger;
+import static org.lwjgl.opengl.GL32C.glGetString;
+import static org.lwjgl.opengl.GL32C.glViewport;
 
 /**
  * The Loading Window that is opened Immediately after Forge starts.
  * It is called from the ModDirTransformerDiscoverer, the soonest method that ModLauncher calls into Forge code.
  * In this way, we can be sure that this will not run before any transformer or injection.
- *
+ * <p>
  * The window itself is spun off into a secondary thread, and is handed off to the main game by Forge.
- *
+ * <p>
  * Because it is created so early, this thread will "absorb" the context from OpenGL.
  * Therefore, it is of utmost importance that the Context is made Current for the main thread before handoff,
  * otherwise OS X will crash out.
- *
+ * <p>
  * Based on the prior ClientVisualization, with some personal touches.
  */
 public class DisplayWindow implements ImmediateWindowProvider {
-    private static final int[][] GL_VERSIONS = new int[][] { { 4, 6 }, { 4, 5 }, { 4, 4 }, { 4, 3 }, { 4, 2 }, { 4, 1 }, { 4, 0 }, { 3, 3 }, { 3, 2 } };
+    private static final int[][] GL_VERSIONS = new int[][]{{4, 6}, {4, 5}, {4, 4}, {4, 3}, {4, 2}, {4, 1}, {4, 0}, {3, 3}, {3, 2}};
     private static final Logger LOGGER = LoggerFactory.getLogger("EARLYDISPLAY");
     private final AtomicBoolean animationTimerTrigger = new AtomicBoolean(true);
 
     private ColourScheme colourScheme;
     private ElementShader elementShader;
+    private boolean debugContext;
 
     private RenderElement.DisplayContext context;
     private List<RenderElement> elements;
@@ -91,7 +160,8 @@ public class DisplayWindow implements ImmediateWindowProvider {
     private PerformanceInfo performanceInfo;
     private ScheduledFuture<?> performanceTick;
     // The GL ID of the window. Used for all operations
-    private long window;
+    @VisibleForTesting
+    long window;
     // The thread that contains and ticks the window while Forge is loading mods
     private ScheduledExecutorService renderScheduler;
     private int fbWidth;
@@ -106,7 +176,11 @@ public class DisplayWindow implements ImmediateWindowProvider {
     private boolean maximized;
     private String glVersion;
     private SimpleFont font;
-    private Runnable repaintTick = () -> {};
+    private Runnable repaintTick = () -> {
+    };
+    private Callback debugCallback;
+    @VisibleForTesting
+    PerformanceInfoSource performanceInfoSource;
 
     @Override
     public String name() {
@@ -142,14 +216,14 @@ public class DisplayWindow implements ImmediateWindowProvider {
                 this.colourScheme = colourScheme ? ColourScheme.BLACK : ColourScheme.RED;
             } catch (IOException ioe) {
                 // No options
-                this.colourScheme = ColourScheme.RED; // default to red colourscheme
+                this.colourScheme = ColourScheme.BLACK; // default to red colourscheme
             }
         }
         this.maximized = parsed.has(maximizedopt) || FMLConfig.getBoolConfigValue(FMLConfig.ConfigValue.EARLY_WINDOW_MAXIMIZED);
 
-        var forgeVersion = parsed.valueOf(forgeversionopt);
+        var forgeVersion = Objects.requireNonNullElse(parsed.valueOf(forgeversionopt), "");
         StartupNotificationManager.modLoaderConsumer().ifPresent(c -> c.accept("NeoForge loading " + forgeVersion));
-        performanceInfo = new PerformanceInfo();
+        performanceInfo = new PerformanceInfo(performanceInfoSource);
         return start(parsed.valueOf(mcversionopt), forgeVersion);
     }
 
@@ -159,7 +233,7 @@ public class DisplayWindow implements ImmediateWindowProvider {
     /**
      * The main render loop.
      * renderThread executes this.
-     *
+     * <p>
      * Performs initialization and then ticks the screen at 20 fps.
      * When the thread is killed, context is destroyed.
      */
@@ -189,7 +263,8 @@ public class DisplayWindow implements ImmediateWindowProvider {
         } catch (Throwable t) {
             LOGGER.error("BARF", t);
         } finally {
-            if (this.windowTick != null) glfwMakeContextCurrent(0); // we release the gl context IF we're running off the main thread
+            if (this.windowTick != null)
+                glfwMakeContextCurrent(0); // we release the gl context IF we're running off the main thread
             renderLock.release();
         }
     }
@@ -197,7 +272,7 @@ public class DisplayWindow implements ImmediateWindowProvider {
     /**
      * Render initialization methods called by the Render Thread.
      * It compiles the fragment and vertex shaders for rendering text with STB, and sets up basic render framework.
-     *
+     * <p>
      * Nothing fancy, we just want to draw and render text.
      */
     private void initRender(final @Nullable String mcVersion, final String forgeVersion) {
@@ -207,6 +282,11 @@ public class DisplayWindow implements ImmediateWindowProvider {
         glfwSwapInterval(1);
         createCapabilities();
         LOGGER.info("GL info: " + glGetString(GL_RENDERER) + " GL version " + glGetString(GL_VERSION) + ", " + glGetString(GL_VENDOR));
+
+        if (debugContext) {
+            debugCallback = GLUtil.setupDebugMessageCallback();
+
+        }
 
         elementShader = new ElementShader();
         try {
@@ -331,17 +411,17 @@ public class DisplayWindow implements ImmediateWindowProvider {
 
     /**
      * Called to initialize the window when preparing for the Render Thread.
-     *
+     * <p>
      * The act of calling glfwInit here creates a concurrency issue; GL doesn't know whether we're gonna call any
      * GL functions from the secondary thread and the main thread at the same time.
-     *
+     * <p>
      * It's then our job to make sure this doesn't happen, only calling GL functions where the Context is Current.
      * As long as we can verify that, then GL (and things like OS X) have no complaints with doing this.
      *
      * @param mcVersion Minecraft Version
      * @return The selected GL profile as an integer pair
      */
-    public void initWindow(@Nullable String mcVersion) {
+    private void initWindow(@Nullable String mcVersion) {
         // Initialize GLFW with a time guard, in case something goes wrong
         long glfwInitBegin = System.nanoTime();
         if (!glfwInit()) {
@@ -405,6 +485,9 @@ public class DisplayWindow implements ImmediateWindowProvider {
             glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, GL_VERSIONS[versidx][1]);
             glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
             glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+            if (debugContext) {
+                glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
+            }
             window = glfwCreateWindow(winWidth, winHeight, "Minecraft: NeoForge Loading...", 0L, 0L);
             var erridx = versidx;
             handleLastGLFWError((error, description) -> lastGLError[erridx] = String.format("Trying %d.%d: GLFW error: [0x%X]%s", GL_VERSIONS[erridx][0], GL_VERSIONS[erridx][1], error, description));
@@ -418,10 +501,10 @@ public class DisplayWindow implements ImmediateWindowProvider {
             LOGGER.error("Failed to find any valid GLFW profile. " + lastGLError[0]);
 
             crashElegantly("Failed to find a valid GLFW profile.\nWe tried " +
-                    Arrays.stream(GL_VERSIONS).map(p -> p[0] + "." + p[1]).filter(o -> !skipVersions.contains(o))
-                            .collect(Collector.of(() -> new StringJoiner(", ").setEmptyValue("no versions"), StringJoiner::add, StringJoiner::merge, StringJoiner::toString))
-                    +
-                    " but none of them worked.\n" + Arrays.stream(lastGLError).filter(Objects::nonNull).collect(Collectors.joining("\n")));
+                           Arrays.stream(GL_VERSIONS).map(p -> p[0] + "." + p[1]).filter(o -> !skipVersions.contains(o))
+                                   .collect(Collector.of(() -> new StringJoiner(", ").setEmptyValue("no versions"), StringJoiner::add, StringJoiner::merge, StringJoiner::toString))
+                           +
+                           " but none of them worked.\n" + Arrays.stream(lastGLError).filter(Objects::nonNull).collect(Collectors.joining("\n")));
             throw new IllegalStateException("Failed to create a GLFW window with any profile");
         }
         successfulWindow.set(true);
@@ -625,14 +708,62 @@ public class DisplayWindow implements ImmediateWindowProvider {
 
     public void close() {
         // Close the Render Scheduler thread
-        renderScheduler.shutdown();
-        this.framebuffer.close();
-        this.context.elementShader().close();
-        SimpleBufferBuilder.destroy();
+        if (renderScheduler != null) {
+            renderScheduler.submit(() -> {
+                this.framebuffer.close();
+                context.elementShader().close();
+                SimpleBufferBuilder.destroy();
+            });
+            renderScheduler.shutdown();
+            if (debugCallback != null) {
+                debugCallback.free();
+            }
+        }
     }
 
     @Override
     public void crash(final String message) {
         crashElegantly(message);
+    }
+
+    @VisibleForTesting
+    byte[] takeScreenshot() throws Exception {
+        if (renderScheduler == null) {
+            throw new IllegalStateException("Not running");
+        }
+        // Need to wait for the initialization to occur.
+        initializationFuture.get();
+        return renderScheduler.submit(() -> {
+            glfwMakeContextCurrent(window);
+            long pixelBuffer = 0;
+            try {
+                pixelBuffer = framebuffer.takeScreenshot();
+
+                byte[] pngData;
+                try (var callback = new WriteCallback()) {
+                    STBImageWrite.nstbi_write_png_to_func(callback.address(), 0L, context.scaledWidth(), context.scaledHeight(), 4, pixelBuffer, 0);
+                    pngData = callback.outputStream.toByteArray();
+                }
+                return pngData;
+            } finally {
+                MemoryUtil.nmemFree(pixelBuffer);
+                glfwMakeContextCurrent(0);
+            }
+        }).get();
+    }
+
+    static class WriteCallback extends STBIWriteCallback {
+        final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+
+        public void invoke(long pContext, long pData, int pSize) {
+            ByteBuffer bytebuffer = getData(pData, pSize);
+            byte[] buffer = new byte[pSize];
+            bytebuffer.get(buffer);
+            outputStream.writeBytes(buffer);
+        }
+    }
+
+    public void setDebugContext(boolean debugContext) {
+        this.debugContext = debugContext;
     }
 }

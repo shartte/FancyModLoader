@@ -202,6 +202,9 @@ public class RenderElement {
     private static void memoryInfo(SimpleFont font, final SimpleBufferBuilder buffer, final DisplayContext context, final int frameNumber) {
         var y = 10 * context.scale();
         PerformanceInfo pi = context.performance();
+        if (pi.isDisabled()) {
+            return;
+        }
         final int colour = hsvToRGB((1.0f - (float) Math.pow(pi.memory(), 1.5f)) / 3f, 1.0f, 0.5f);
         var bar = progressBar(ctx -> new int[] { (ctx.scaledWidth() - BAR_WIDTH * ctx.scale()) / 2, y, BAR_WIDTH * ctx.scale() }, f -> colour, f -> new float[] { 0f, pi.memory() });
         var width = font.stringWidth(pi.text());
